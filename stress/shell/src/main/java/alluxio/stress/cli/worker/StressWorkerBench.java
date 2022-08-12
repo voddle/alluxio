@@ -355,14 +355,27 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
           }
         }
       } else {
-        while (true) {
-          int actualReadLength = mInStreams[i].read(mBuffer);
+//        while (true) {
+//          int actualReadLength = mInStreams[i].read(mBuffer);
+//          if (actualReadLength < 0) {
+//            closeInStream(i);
+//            mInStreams[i] = mFs.open(filePath);
+//            break;
+//          } else {
+//            bytesRead += actualReadLength;
+//          }
+//        }
+        length = mBuffer.length;
+        while (length > 0) {
+          int actualReadLength = mInStreams[i]
+                  .read(offset, mBuffer, 0, mBuffer.length);
           if (actualReadLength < 0) {
             closeInStream(i);
-            mInStreams[i] = mFs.open(filePath);
             break;
           } else {
             bytesRead += actualReadLength;
+            length -= actualReadLength;
+            offset += actualReadLength;
           }
         }
       }
