@@ -332,6 +332,7 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
      * @return the actual red byte number
      */
     private int applyOperation(int i) throws IOException {
+      LOG.info("Working on file: " + i);
       Path filePath = mFilePaths[i];
       int offset = mOffsets[i];
       int length = mLengths[i];
