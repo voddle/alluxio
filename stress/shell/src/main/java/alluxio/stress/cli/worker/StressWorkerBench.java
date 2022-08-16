@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -48,11 +49,18 @@ import java.util.concurrent.TimeUnit;
  */
 // TODO(jiacheng): avoid the implicit casts and @SuppressFBWarnings
 public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult,
-    WorkerBenchParameters> {
+        WorkerBenchParameters> {
   private static final Logger LOG = LoggerFactory.getLogger(StressWorkerBench.class);
 
   private FileSystem[] mCachedFs;
-  private Path mFilePath;
+  private Path[] mFilePaths;
+  private Integer[] mOffsets;
+  private Integer[] mLengths;
+
+  /** generate random number in range [min, max] (include both min and max).*/
+  private Integer randomNumInRange(Random rand, int min, int max) {
+    return rand.nextInt(max - min + 1) + min;
+  }
 
   /**
    * Creates instance.
@@ -71,26 +79,53 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
   @Override
   public String getBenchDescription() {
     return String.join("\n", ImmutableList.of(
-        "A benchmarking tool to measure the read performance of alluxio workers in the cluster",
-        "The test will create one file and repeatedly read the created file to test the "
-            + "performance",
-        "",
-        "Example:",
-        "# This would create a 100MB file with block size of 16KB and then read the file "
-            + "for 30s after 10s warmup",
-        "$ bin/alluxio runClass alluxio.stress.cli.worker.StressWorkerBench --clients 1 "
-            + "--base alluxio:///stress-worker-base --block-size 16k --file-size 100m "
-            + "--warmup 10s --duration 30s --cluster\n"
+            "A benchmarking tool to measure the read performance of alluxio workers in the cluster",
+            "The test will create one file and repeatedly read the created file to test the "
+                    + "performance",
+            "",
+            "Example:",
+            "# This would create a 100MB file with block size of 16KB and then read the file "
+                    + "for 30s after 10s warmup",
+            "$ bin/alluxio runClass alluxio.stress.cli.worker.StressWorkerBench --clients 1 "
+                    + "--base alluxio:///stress-worker-base --block-size 16k --file-size 100m "
+                    + "--warmup 10s --duration 30s --cluster\n"
     ));
   }
 
   @Override
   @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
   public void prepare() throws Exception {
-    mFilePath = new Path(mParameters.mBasePath, "data");
 
     // Read and write to one worker
     ClientIOWritePolicy.setMaxWorkers(1);
+
+    // initialize the base, for only the non-distributed task (the cluster launching task)
+    Path path = new Path(mParameters.mBasePath);
+    int fileSize = (int) FormatUtils.parseSpaceSize(mParameters.mFileSize);
+
+    mFilePaths = new Path[mParameters.mNumFiles];
+    // set random offsets and lengths if enabled
+    mLengths = new Integer[mParameters.mNumFiles];
+    mOffsets = new Integer[mParameters.mNumFiles];
+
+    Random rand = new Random();
+    if (mParameters.mIsRandom) {
+      rand = new Random(mParameters.mRandomSeed);
+    }
+    for (int i = 0; i < mParameters.mNumFiles; i++) {
+      Path filePath = new Path(path, "data" + i);
+      mFilePaths[i] = filePath;
+      if (mParameters.mIsRandom) {
+        int randomMin = (int) FormatUtils.parseSpaceSize(mParameters.mRandomMinReadLength);
+        int randomMax = (int) FormatUtils.parseSpaceSize(mParameters.mRandomMaxReadLength);
+        mOffsets[i] = randomNumInRange(rand, 0, fileSize - 1 - randomMin);
+        mLengths[i] = randomNumInRange(rand, randomMin,
+                Integer.min(fileSize - mOffsets[i], randomMax));
+      } else {
+        mOffsets[i] = 0;
+        mLengths[i] = fileSize;
+      }
+    }
 
     if (!mBaseParameters.mDistributed) {
       // set hdfs conf for preparation client
@@ -99,37 +134,36 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
       hdfsConf.set(PropertyKey.Name.USER_FILE_DELETE_UNCHECKED, "true");
       hdfsConf.set(PropertyKey.Name.USER_FILE_WRITE_TYPE_DEFAULT, "CACHE_THROUGH");
       hdfsConf.set(PropertyKey.Name.USER_BLOCK_WRITE_LOCATION_POLICY,
-          ClientIOWritePolicy.class.getName());
+              ClientIOWritePolicy.class.getName());
       hdfsConf.set(PropertyKey.Name.USER_UFS_BLOCK_READ_LOCATION_POLICY,
-          ClientIOWritePolicy.class.getName());
+              ClientIOWritePolicy.class.getName());
       FileSystem prepareFs = FileSystem.get(new URI(mParameters.mBasePath), hdfsConf);
 
-      // initialize the base, for only the non-distributed task (the cluster launching task)
-      Path path = new Path(mParameters.mBasePath);
+      if (!mParameters.mSkipCreation) {
+        prepareFs.delete(path, true);
+        prepareFs.mkdirs(path);
+        byte[] buffer = new byte[(int) FormatUtils.parseSpaceSize(mParameters.mBufferSize)];
+        Arrays.fill(buffer, (byte) 'A');
 
-      prepareFs.delete(path, true);
-      prepareFs.mkdirs(path);
-
-      int fileSize = (int) FormatUtils.parseSpaceSize(mParameters.mFileSize);
-      byte[] buffer = new byte[(int) FormatUtils.parseSpaceSize(mParameters.mBufferSize)];
-      Arrays.fill(buffer, (byte) 'A');
-
-      try (FSDataOutputStream mOutStream = prepareFs
-          .create(mFilePath, false, buffer.length, (short) 1,
-              FormatUtils.parseSpaceSize(mParameters.mBlockSize))) {
-        while (true) {
-          int bytesToWrite = (int) Math.min(fileSize - mOutStream.getPos(), buffer.length);
-          if (bytesToWrite == 0) {
-            break;
+        for (int i = 0; i < mParameters.mNumFiles; i++) {
+          Path filePath = mFilePaths[i];
+          try (FSDataOutputStream mOutStream = prepareFs
+                  .create(filePath, false, buffer.length, (short) 1,
+                          FormatUtils.parseSpaceSize(mParameters.mBlockSize))) {
+            while (true) {
+              int bytesToWrite = (int) Math.min(fileSize - mOutStream.getPos(), buffer.length);
+              if (bytesToWrite == 0) {
+                break;
+              }
+              mOutStream.write(buffer, 0, bytesToWrite);
+            }
           }
-          mOutStream.write(buffer, 0, bytesToWrite);
+          if (mParameters.mFree && Constants.SCHEME.equals(filePath.toUri().getScheme())) {
+            // free the alluxio file
+            alluxio.client.file.FileSystem.Factory.get().free(new AlluxioURI(filePath.toString()));
+            LOG.info("Freed file before reading: " + filePath);
+          }
         }
-      }
-
-      if (mParameters.mFree && Constants.SCHEME.equals(mFilePath.toUri().getScheme())) {
-        // free the alluxio file
-        alluxio.client.file.FileSystem.Factory.get().free(new AlluxioURI(mFilePath.toString()));
-        LOG.info("Freed file before reading: " + mFilePath);
       }
     }
 
@@ -137,12 +171,12 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
     Configuration hdfsConf = new Configuration();
     // do not cache these clients
     hdfsConf.set(
-        String.format("fs.%s.impl.disable.cache", (new URI(mParameters.mBasePath)).getScheme()),
-        "true");
+            String.format("fs.%s.impl.disable.cache", (new URI(mParameters.mBasePath)).getScheme()),
+            "true");
     hdfsConf.set(PropertyKey.Name.USER_BLOCK_WRITE_LOCATION_POLICY,
-        ClientIOWritePolicy.class.getName());
+            ClientIOWritePolicy.class.getName());
     hdfsConf.set(PropertyKey.Name.USER_UFS_BLOCK_READ_LOCATION_POLICY,
-        ClientIOWritePolicy.class.getName());
+            ClientIOWritePolicy.class.getName());
     for (Map.Entry<String, String> entry : mParameters.mConf.entrySet()) {
       hdfsConf.set(entry.getKey(), entry.getValue());
     }
@@ -157,7 +191,7 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
   @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
   public WorkerBenchTaskResult runLocal() throws Exception {
     ExecutorService service =
-        ExecutorServiceFactories.fixedThreadPool("bench-thread", mParameters.mThreads).create();
+            ExecutorServiceFactories.fixedThreadPool("bench-thread", mParameters.mThreads).create();
 
     long durationMs = FormatUtils.parseTimeSize(mParameters.mDuration);
     long warmupMs = FormatUtils.parseTimeSize(mParameters.mWarmup);
@@ -173,7 +207,7 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
       callables.add(new BenchThread(context, mCachedFs[i % mCachedFs.length]));
     }
     service.invokeAll(callables, FormatUtils.parseTimeSize(mBaseParameters.mBenchTimeout),
-        TimeUnit.MILLISECONDS);
+            TimeUnit.MILLISECONDS);
 
     service.shutdownNow();
     service.awaitTermination(30, TimeUnit.SECONDS);
@@ -223,8 +257,9 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
     private final FileSystem mFs;
     private final byte[] mBuffer;
     private final WorkerBenchTaskResult mResult;
+    private final boolean mIsRandomReed;
 
-    private FSDataInputStream mInStream = null;
+    private final FSDataInputStream[] mInStreams = new FSDataInputStream[mFilePaths.length];
 
     @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
     private BenchThread(BenchContext context, FileSystem fs) {
@@ -235,6 +270,7 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
       mResult = new WorkerBenchTaskResult();
       mResult.setParameters(mParameters);
       mResult.setBaseParameters(mBaseParameters);
+      mIsRandomReed = mParameters.mIsRandom;
     }
 
     @Override
@@ -245,7 +281,9 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
         LOG.error(Thread.currentThread().getName() + ": failed", e);
         mResult.addErrorMessage(e.getMessage());
       } finally {
-        closeInStream();
+        for (int i = 0; i < mInStreams.length; i++) {
+          closeInStream(i);
+        }
       }
 
       // Update local thread end time
@@ -265,15 +303,15 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
       long waitMs = mContext.getStartMs() - CommonUtils.getCurrentMs();
       if (waitMs < 0) {
         throw new IllegalStateException(String.format(
-            "Thread missed barrier. Increase the start delay. start: %d current: %d",
-            mContext.getStartMs(), CommonUtils.getCurrentMs()));
+                "Thread missed barrier. Increase the start delay. start: %d current: %d",
+                mContext.getStartMs(), CommonUtils.getCurrentMs()));
       }
       CommonUtils.sleepMs(waitMs);
 
+      int i = 0;
       while (!Thread.currentThread().isInterrupted()
-          && CommonUtils.getCurrentMs() < mContext.getEndMs()) {
-        int ioBytes = applyOperation();
-
+              && CommonUtils.getCurrentMs() < mContext.getEndMs() && i < mFilePaths.length) {
+        int ioBytes = applyOperation(i);
         long currentMs = CommonUtils.getCurrentMs();
         // Start recording after the warmup
         if (currentMs > recordMs) {
@@ -281,31 +319,65 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
             mResult.incrementIOBytes(ioBytes);
           }
         }
+        i++;
+        if (i >= mFilePaths.length) {
+          i = 0;
+        }
       }
     }
 
-    private int applyOperation() throws IOException {
-      if (mInStream == null) {
-        mInStream = mFs.open(mFilePath);
+    /**
+     * Read the file by the offset and length based on the given index.
+     * @param i the index of the path, offset and length of the target file
+     * @return the actual red byte number
+     */
+    private int applyOperation(int i) throws IOException {
+      Path filePath = mFilePaths[i];
+      int offset = mOffsets[i];
+      int length = mLengths[i];
+
+      if (mInStreams[i] == null) {
+        mInStreams[i] = mFs.open(filePath);
       }
 
-      int bytesRead = mInStream.read(mBuffer);
-      if (bytesRead < 0) {
-        closeInStream();
-        mInStream = mFs.open(mFilePath);
+      int bytesRead = 0;
+      if (mIsRandomReed) {
+        while (length > 0) {
+          int actualReadLength = mInStreams[i]
+                  .read(offset, mBuffer, 0, mBuffer.length);
+          if (actualReadLength < 0) {
+            closeInStream(i);
+            break;
+          } else {
+            bytesRead += actualReadLength;
+            length -= actualReadLength;
+            offset += actualReadLength;
+          }
+        }
+      } else {
+        while (true) {
+          int actualReadLength = mInStreams[i].read(mBuffer);
+          if (actualReadLength < 0) {
+            closeInStream(i);
+            mInStreams[i] = mFs.open(filePath);
+            break;
+          } else {
+            bytesRead += actualReadLength;
+          }
+        }
       }
       return bytesRead;
     }
 
-    private void closeInStream() {
+    private void closeInStream(int i) {
       try {
-        if (mInStream != null) {
-          mInStream.close();
+        if (mInStreams[i] != null) {
+          mInStreams[i].close();
         }
       } catch (IOException e) {
         mResult.addErrorMessage(e.getMessage());
       } finally {
-        mInStream = null;
+        mInStreams[i] = null;
       }
     }
   }
