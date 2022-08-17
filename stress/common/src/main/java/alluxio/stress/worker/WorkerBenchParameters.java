@@ -42,7 +42,7 @@ public final class WorkerBenchParameters extends FileSystemParameters {
   public int mClients = 1;
 
   @Parameter(names = {"--threads"}, description = "the number of threads to use")
-  public int mThreads = 256;
+  public int mThreads = 128;
 
   @Parameter(names = {"--duration"},
           description = "The length of time to run the benchmark. (1m, 10m, 60s, 10000ms, etc.)")
