@@ -118,11 +118,9 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
       if (mParameters.mIsRandom) {
          int randomMin = (int) FormatUtils.parseSpaceSize(mParameters.mRandomMinReadLength);
          int randomMax = (int) FormatUtils.parseSpaceSize(mParameters.mRandomMaxReadLength);
-//         mOffsets[i] = randomNumInRange(rand, 0, fileSize - 1 - randomMin);
-//         mLengths[i] = randomNumInRange(rand, randomMin,
-//                 Integer.min(fileSize - mOffsets[i], randomMax));
-        mOffsets[i] = 0;
-        mLengths[i] = fileSize;
+         mOffsets[i] = randomNumInRange(rand, 0, fileSize - 1 - randomMin);
+         mLengths[i] = randomNumInRange(rand, randomMin,
+                 Integer.min(fileSize - mOffsets[i], randomMax));
       } else {
         mOffsets[i] = 0;
         mLengths[i] = fileSize;
