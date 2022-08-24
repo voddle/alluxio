@@ -118,9 +118,10 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
       if (mParameters.mIsRandom) {
          int randomMin = (int) FormatUtils.parseSpaceSize(mParameters.mRandomMinReadLength);
          int randomMax = (int) FormatUtils.parseSpaceSize(mParameters.mRandomMaxReadLength);
-         mOffsets[i] = randomNumInRange(rand, 0, fileSize - 1 - randomMin);
-         mLengths[i] = randomNumInRange(rand, randomMin,
-                 Integer.min(fileSize - mOffsets[i], randomMax));
+         mOffsets[i] = randomNumInRange(rand, 0, fileSize - 1 - 1 * Constants.MB);
+//          mLengths[i] = randomNumInRange(rand, randomMin,
+//                  Integer.min(fileSize - mOffsets[i], randomMax));
+         mLengths[i] = 1 * Constants.MB;
       } else {
         mOffsets[i] = 0;
         mLengths[i] = fileSize;
@@ -355,7 +356,19 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
           }
         }
       } else {
-        while (true) {
+//         while (true) {
+//           int actualReadLength = mInStreams[i]
+//                   .read(bytesRead, mBuffer, 0, mBuffer.length);
+//           if (actualReadLength < 0) {
+//             closeInStream(i);
+//             mInStreams[i] = mFs.open(filePath);
+//             break;
+//           } else {
+//             bytesRead += actualReadLength;
+//           }
+//         }
+        int j = 0;
+        while (j < 25) {
           int actualReadLength = mInStreams[i]
                   .read(bytesRead, mBuffer, 0, mBuffer.length);
           if (actualReadLength < 0) {
@@ -365,7 +378,10 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
           } else {
             bytesRead += actualReadLength;
           }
+          j += 1;
         }
+        bytesRead += mInStreams[i]
+                .read(bytesRead, mBuffer, 0, 24 * Constants.KB);
       }
       return bytesRead;
     }
