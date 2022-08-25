@@ -356,9 +356,9 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
           }
         }
       } else {
+
 //         while (true) {
-//           int actualReadLength = mInStreams[i]
-//                   .read(bytesRead, mBuffer, 0, mBuffer.length);
+//           int actualReadLength = mInStreams[i].read(mBuffer);
 //           if (actualReadLength < 0) {
 //             closeInStream(i);
 //             mInStreams[i] = mFs.open(filePath);
@@ -367,21 +367,35 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
 //             bytesRead += actualReadLength;
 //           }
 //         }
-        int j = 0;
-        while (j < 25) {
-          int actualReadLength = mInStreams[i]
-                  .read(bytesRead, mBuffer, 0, mBuffer.length);
+
+        // constantly read 1 MB now
+        int bufferLength = mBuffer.length;
+        while (length > bufferLength) {
+          int actualReadLength = mInStreams[i].read(mBuffer);
           if (actualReadLength < 0) {
             closeInStream(i);
             mInStreams[i] = mFs.open(filePath);
-            break;
+            // since now need to make sure read 40 KB, no break anymore
+            // break;
           } else {
             bytesRead += actualReadLength;
+            length -= actualReadLength;
           }
-          j += 1;
         }
-        bytesRead += mInStreams[i]
-                .read(bytesRead, mBuffer, 0, 24 * Constants.KB);
+        // here process the rest data which length under 40 KB(mBuffer.length)
+        while (length > 0) {
+          byte[] tmpBuffer = new byte[length];
+          int actualReadLength = mInStreams[i].read(tmpBuffer);
+          if (actualReadLength < 0) {
+            closeInStream(i);
+            mInStreams[i] = mFs.open(filePath);
+            // since now need to make sure read 40 KB, no break anymore
+            // break;
+          } else {
+            bytesRead += actualReadLength;
+            length -= actualReadLength;
+          }
+        }
       }
       return bytesRead;
     }
