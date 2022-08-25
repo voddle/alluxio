@@ -344,11 +344,13 @@ public class StressWorkerBench extends AbstractStressBench<WorkerBenchTaskResult
       int bytesRead = 0;
       if (mIsRandomReed) {
         while (length > 0) {
+          // maybe should start a new loop after length smaller than mBuffer.length
           int actualReadLength = mInStreams[i]
-                  .read(offset, mBuffer, 0, mBuffer.length);
+                  .read(offset, mBuffer, 0, Math.min(mBuffer.length, length));
           if (actualReadLength < 0) {
             closeInStream(i);
-            break;
+            // in order to make sure read 1 MB, no break
+            mInStreams[i] = mFs.open(filePath);
           } else {
             bytesRead += actualReadLength;
             length -= actualReadLength;
