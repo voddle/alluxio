@@ -1,83 +1,83 @@
 Worker.ActiveClients:
-  'The number of clients actively reading from or writing to this worker'
+  '正在活跃地读取或写入此 worker 的客户端数量'
 Worker.ActiveRpcReadCount:
-  'The number of active read-RPCs managed by this worker'
+  '此 worker 管理的读 RPC 数量'
 Worker.ActiveRpcWriteCount:
-  'The number of active write-RPCs managed by this worker'
+  '此 worker 管理的写 RPC 数量'
 Worker.BlockReaderCompleteTaskCount:
-  'The approximate total number of block read tasks that have completed execution'
+  '已经完成执行的读任务的近似值'
 Worker.BlockReaderThreadActiveCount:
-  'The approximate number of block read threads that are actively executing tasks in reader thread pool'
+  'reader 线程池中正在活跃执行任务的读线程数量的近似值'
 Worker.BlockReaderThreadCurrentCount:
-  'The current number of read threads in the reader thread pool'
+  '此 reader 线程池中的读线程数'
 Worker.BlockReaderThreadMaxCount:
-  'The maximum allowed number of block read thread in the reader thread pool'
+  'reader 线程池中读线程允许的最大数量'
 Worker.BlockRemoverBlocksRemovedCount:
-  'The total number of blocks successfully removed from this worker by asynchronous block remover.'
+  '此 worker 中被 asynchronous block remover 成功移除的块的总数量'
 Worker.BlockRemoverRemovingBlocksSize:
-  'The size of blocks is being removed from this worker at a moment by asynchronous block remover.'
+  'asynchronous block remover 正在从此 worker 移除的块大小'
 Worker.BlockRemoverTryRemoveBlocksSize:
-  'The number of blocks to be removed from this worker at a moment by asynchronous block remover.'
+  'asynchronous block remover 正要从此 worker 移除的块大小'
 Worker.BlockRemoverTryRemoveCount:
-  'The total number of blocks this worker attempted to remove with asynchronous block remover.'
+  'asynchronous block remover 尝试从此 worker 移除的块大小'
 Worker.BlockSerializedCompleteTaskCount:
-  'The approximate total number of block serialized tasks that have completed execution'
+  '完成执行的块序列化任务完成总量近似值'
 Worker.BlockSerializedThreadActiveCount:
-  'The approximate number of block serialized threads that are actively executing tasks in serialized thread pool'
+  'serialized 线程池中正在活跃执行任务的 block serialized 线程近似数量'
 Worker.BlockSerializedThreadCurrentCount:
-  'The current number of serialized threads in the serialized thread pool'
+  '此 serialized 线程池中 block serialized 线程数量'
 Worker.BlockSerializedThreadMaxCount:
-  'The maximum allowed number of block serialized thread in the serialized thread pool'
+  'serialized 线程池中 block serialized 线程允许的最大数量'
 Worker.BlockWriterCompleteTaskCount:
-  'The approximate total number of block write tasks that have completed execution'
+  '已经完成执行的 block serialized 任务的近似值'
 Worker.BlockWriterThreadActiveCount:
-  'The approximate number of block write threads that are actively executing tasks in writer thread pool'
+  'writer 线程池中正在活跃执行任务的写线程数量的近似值'
 Worker.BlockWriterThreadCurrentCount:
-  'The current number of write threads in the writer thread pool'
+  '此 writer 线程池中的写线程数'
 Worker.BlockWriterThreadMaxCount:
-  'The maximum allowed number of block write thread in the writer thread pool'
+  'writer 线程池中写线程允许的最大数量'
 Worker.BlocksAccessed:
-  'Total number of times any one of the blocks in this worker is accessed.'
+  '此 worker 中任意一个块可以被访问的总时间'
 Worker.BlocksCached:
-  'Total number of blocks used for caching data in an Alluxio worker'
+  '一个 Alluxio worker 中被用于缓存数据的块总数'
 Worker.BlocksCancelled:
-  'Total number of aborted temporary blocks in this worker.'
+  '此 worker 中废弃的临时块总量'
 Worker.BlocksDeleted:
-  'Total number of deleted blocks in this worker by external requests.'
+  '此 worker 中被外部请求删除的块总量'
 Worker.BlocksEvicted:
-  'Total number of evicted blocks in this worker.'
+  '此 worker 中被驱逐的块总量'
 Worker.BlocksEvictionRate:
-  'Block eviction rate in this worker.'
+  '此 worker 的块驱逐率'
 Worker.BlocksLost:
-  'Total number of lost blocks in this worker.'
+  '此 worker 丢失块总量'
 Worker.BlocksPromoted:
-  'Total number of times any one of the blocks in this worker moved to a new tier.'
+  '此 worker 中，任何一个块被移到新层的总次数'
 Worker.BlocksReadLocal:
-  'Total number of local blocks read by this worker.'
+  '此 worker 读的本地块总数'
 Worker.BlocksReadRemote:
-  'Total number of a remote blocks read by this worker.'
+  '此 worker 读的远端块总数'
 Worker.BlocksReadUfs:
-  'Total number of a UFS blocks read by this worker.'
-Worker.BytesReadDirect:
+  '此 worker 读的 UFS 块总数'
   'Total number of bytes read from the this worker without external RPC involved. Data exists in worker storage or is fetched by this worker from underlying UFSes. This records data read by worker internal calls (e.g. a client embedded in this worker).'
+  '这个 worker 中没有外部 RPC 参与的总字节数。数据存在于 worker 存储中或者由这个 worker 从底层 UFS 获取。这个指标记录了 worker 内部调用读取的数据（e.g. 嵌入在这个 worker 中的客户端）'
 Worker.BytesReadDirectThroughput:
-  'Throughput of bytes read from the this worker without external RPC involved. Data exists in worker storage or is fetched by this worker from underlying UFSes. This records data read by worker internal calls (e.g. a client embedded in this worker).'
+  '此 worker 中没有涉及外部 RPC 的字节读取吞吐量。数据存在于 worker 存储中或由该 worker 从底层 UFS 中获取。这记录了 worker 内部调用（e.g. 位于此 worker 中的客户端）读取的数据'
 Worker.BytesReadDomain:
-  'Total number of bytes read from the this worker via domain socket'
+  '此 worker 通过域套接字读取的总字节数'
 Worker.BytesReadDomainThroughput:
-  'Bytes read throughput from the this worker via domain socket'
+  '此 worker 通过域套接字读取字节的吞吐量'
 Worker.BytesReadPerUfs:
-  'Total number of bytes read from a specific Alluxio UFS by this worker'
+  '此 worker 从特定 Alluxio UFS 读取的总字节数'
 Worker.BytesReadRemote:
-  'Total number of bytes read from the this worker via network (RPC). Data exists in worker storage or is fetched by this worker from underlying UFSes. This does not include short-circuit local reads and domain socket reads.'
+  '这个 worker 通过网络（RPC）读取的字节总数。数据存在于 worker 存储中或由该 worker 从底层 UFS 获取。这不包括短路本地读取和域套接字读取'
 Worker.BytesReadRemoteThroughput:
-  'Throughput of bytes read from the this worker via network (RPC). Data exists in worker storage or is fetched by this worker from underlying UFSes. This does not include short-circuit local reads and domain socket reads'
+  '这是一项衡量通过网络（RPC）从这个 worker 读取的字节数的吞吐量的指标。数据存在于 worker 存储中，或者由该 worker 从底层 UFS 中获取。这不包括短路本地读取和域套接字读取'
 Worker.BytesReadUfsThroughput:
-  'Bytes read throughput from all Alluxio UFSes by this worker'
+  '由这个 worker 从 Alluxio UFS 读取字节的吞吐量'
 Worker.BytesWrittenDirect:
-  'Total number of bytes written to this worker without external RPC involved. Data is written to worker storage or is written by this worker to underlying UFSes. This records data written by worker internal calls (e.g. a client embedded in this worker).'
+  '不涉及外部 RPC写入这个 worker 的总字节数。数据写入 worker 存储或由这个 worker 写入下层 UFS。这记录了 worker 内部调用（e.g. 嵌入在这个 worker 中的客户端）写入的数据'
 Worker.BytesWrittenDirectThroughput:
-  'Bytes written throughput to this worker without external RPC involved. Data is written to worker storage or is written by this worker to underlying UFSes. This records data written by worker internal calls (e.g. a client embedded in this worker).'
+  'Total number of bytes written to this worker without external RPC involved. Data is written to worker storage or is written by this worker to underlying UFSes. This records data written by worker internal calls (e.g. a client embedded in this worker).'
 Worker.BytesWrittenDomain:
   'Total number of bytes written to this worker via domain socket'
 Worker.BytesWrittenDomainThroughput:
