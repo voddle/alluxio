@@ -243,10 +243,10 @@ A subset of the memory usage metrics are listed as following:
 | heap.committed | The amount of memory from heap area guaranteed to be available |
 | heap.init | The amount of memory from heap area available at initialization |
 | heap.max | The maximum amount of memory from heap area that is available |
-| heap.usage | The amount of memory from heap area currently used in GB|
+| heap.usage | The amount of memory from heap area currently used in GB |
 | heap.used | The amount of memory from heap area that has been used |
 | pools.Code-Cache.used | Used memory of collection usage from the pool from which memory is used for compilation and storage of native code |
-| pools.Compressed-Class-Space.used | Used memory of collection usage from the pool from which memory is use for class metadata |
+| pools.Compressed-Class-Space.used | Used memory of collection usage from the pool from which memory is used for class metadata |
 | pools.PS-Eden-Space.used | Used memory of collection usage from the pool from which memory is initially allocated for most objects |
 | pools.PS-Survivor-Space.used | Used memory of collection usage from the pool containing objects that have survived the garbage collection of the Eden space |
 
