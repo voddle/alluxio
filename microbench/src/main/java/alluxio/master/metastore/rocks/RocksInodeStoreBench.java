@@ -11,6 +11,8 @@
 
 package alluxio.master.metastore.rocks;
 
+import alluxio.master.metastore.ReadOption;
+
 import org.junit.rules.TemporaryFolder;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -58,6 +60,32 @@ public class RocksInodeStoreBench {
     }
   }
 
+  @State(Scope.Benchmark)
+  public static class RockAddChildState {
+    protected RocksInodeStore mRock;
+
+    @Param("10000")
+    protected long mInodeCount;
+
+    @Setup
+    public void before() {
+      TemporaryFolder sFolder = new TemporaryFolder();
+      try {
+        sFolder.create();
+        String sBaseDir = sFolder.newFolder().getAbsolutePath();
+        System.out.println("sBaseDir: " + sBaseDir);
+        mRock = new RocksInodeStore(sBaseDir);
+      } catch (Exception e) {
+        System.out.println("error when getting base dir: " + e);
+      }
+    }
+
+    @TearDown
+    public void after() {
+      mRock.close();
+    }
+  }
+
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   @Benchmark
@@ -65,6 +93,31 @@ public class RocksInodeStoreBench {
     long counter = 0;
     for (long i = rs.mInodeCount; i > 0; i--) {
       rs.mRock.getMutable(i);
+      counter += 1;
+    }
+    return counter;
+  }
+
+  @BenchmarkMode(Mode.AverageTime)
+  @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @Benchmark
+  public long RockGetChildIdBench(RockState rs) {
+    long counter = 0;
+    for (long i = rs.mInodeCount; i > 0; i--) {
+      rs.mRock.getChildId(i, "test" + i, ReadOption.defaults());
+      counter += 1;
+    }
+    return counter;
+  }
+
+  @BenchmarkMode(Mode.AverageTime)
+  @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @Benchmark
+  public long RockAddChildIdBench(RockAddChildState rs) {
+    long counter = 0;
+    long limit = rs.mInodeCount;
+    for (long i = 1; i <= limit; i++) {
+      rs.mRock.addChild(0, "test" + i, i);
       counter += 1;
     }
     return counter;
