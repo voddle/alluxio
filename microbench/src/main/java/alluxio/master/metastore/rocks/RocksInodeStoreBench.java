@@ -11,12 +11,16 @@
 
 package alluxio.master.metastore.rocks;
 
+import alluxio.master.file.meta.InodeView;
+import alluxio.master.file.meta.MutableInodeFile;
 import alluxio.master.metastore.ReadOption;
+import alluxio.resource.CloseableIterator;
 
 import org.junit.rules.TemporaryFolder;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
@@ -29,7 +33,7 @@ import org.openjdk.jmh.annotations.Warmup;
 import java.util.concurrent.TimeUnit;
 
 @Fork(value = 3)
-@Warmup(iterations = 3)
+@Warmup(iterations = 2)
 public class RocksInodeStoreBench {
   @State(Scope.Benchmark)
   public static class RockState {
@@ -44,7 +48,6 @@ public class RocksInodeStoreBench {
       try {
         sFolder.create();
         String sBaseDir = sFolder.newFolder().getAbsolutePath();
-        System.out.println("sBaseDir: " + sBaseDir);
         mRock = new RocksInodeStore(sBaseDir);
       } catch (Exception e) {
         System.out.println("error when getting base dir: " + e);
@@ -86,14 +89,56 @@ public class RocksInodeStoreBench {
     }
   }
 
+  @State(Scope.Benchmark)
+  public static class RockGetChildIdsState {
+    protected RocksInodeStore mRock;
+
+    @Param("100")
+    protected long mTreeNumber;
+
+    @Param("100")
+    protected long mTreeWidth;
+
+    @Setup
+    public void before() {
+      TemporaryFolder sFolder = new TemporaryFolder();
+      try {
+        sFolder.create();
+        String sBaseDir = sFolder.newFolder().getAbsolutePath();
+        mRock = new RocksInodeStore(sBaseDir);
+      } catch (Exception e) {
+        System.out.println("error when getting base dir: " + e);
+      }
+      long tmp;
+      long child = mTreeNumber + 1;
+      for (long i = 1; i <= mTreeNumber; i++) {
+        mRock.addChild(0, "test" + i, i);
+        for (long j = 1; j <= mTreeWidth; j++) {
+          tmp = i * 100 + j;
+          mRock.addChild(i, "test" + child, child);
+          child += 1;
+        }
+      }
+    }
+
+    @TearDown
+    public void after() {
+      mRock.close();
+    }
+  }
+
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   @Benchmark
   public long RockGetMutableBench(RockState rs) {
     long counter = 0;
+    MutableInodeFile file = null;
     for (long i = rs.mInodeCount; i > 0; i--) {
-      rs.mRock.getMutable(i);
+      file = rs.mRock.getMutable(i).get().asFile();
       counter += 1;
+    }
+    if (file != null) {
+      System.out.println(file.getBlockContainerId());
     }
     return counter;
   }
@@ -112,6 +157,23 @@ public class RocksInodeStoreBench {
 
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @Measurement(iterations = 3)
+  @Benchmark
+  public long RockGetChildIdsBench(RockGetChildIdsState rs) {
+    long counter = 0;
+    for (long i = rs.mTreeNumber; i > 0; i--) {
+      try {
+        rs.mRock.getChildIds(i, ReadOption.defaults());
+        counter += 1;
+      } catch (Exception e) {
+        System.out.println("when testing: " + e);
+      }
+    }
+    return counter;
+  }
+
+  @BenchmarkMode(Mode.AverageTime)
+  @OutputTimeUnit(TimeUnit.MICROSECONDS)
   @Benchmark
   public long RockAddChildIdBench(RockAddChildState rs) {
     long counter = 0;
@@ -120,6 +182,22 @@ public class RocksInodeStoreBench {
       rs.mRock.addChild(0, "test" + i, i);
       counter += 1;
     }
+    return counter;
+  }
+
+  @BenchmarkMode(Mode.AverageTime)
+  @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @Benchmark
+  public long RockGetIteratorBench(RockAddChildState rs) {
+    long counter = 0;
+    long limit = rs.mInodeCount;
+    CloseableIterator<InodeView> it = rs.mRock.getCloseableIterator();
+    InodeView inode = null;
+    while (it.hasNext()) {
+      inode = it.next();
+    }
+    System.out.println(inode.getId());
+    counter += 1;
     return counter;
   }
 }
