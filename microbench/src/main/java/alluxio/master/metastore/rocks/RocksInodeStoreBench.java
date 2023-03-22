@@ -194,7 +194,6 @@ public class RocksInodeStoreBench {
 
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
-  @GroupThreads(10)
   @Benchmark
   public long RockGetIteratorBench(RockAddChildState rs) {
     long counter = 0;
