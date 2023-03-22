@@ -20,7 +20,6 @@ import org.junit.rules.TemporaryFolder;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.GroupThreads;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -29,6 +28,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
 
 import java.util.concurrent.TimeUnit;
@@ -130,7 +130,7 @@ public class RocksInodeStoreBench {
 
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
-  @GroupThreads(10)
+  @Threads(10)
   @Benchmark
   public long RockGetMutableBench(RockState rs) {
     long counter = 0;
@@ -147,7 +147,7 @@ public class RocksInodeStoreBench {
 
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
-  @GroupThreads(10)
+  @Threads(10)
   @Benchmark
   public long RockGetChildIdBench(RockState rs) {
     long counter = 0;
@@ -161,7 +161,7 @@ public class RocksInodeStoreBench {
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   @Measurement(iterations = 3)
-  @GroupThreads(10)
+  @Threads(10)
   @Benchmark
   public long RockGetChildIdsBench(RockGetChildIdsState rs) {
     long counter = 0;
@@ -180,7 +180,7 @@ public class RocksInodeStoreBench {
 
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
-  @GroupThreads(10)
+  @Threads(10)
   @Benchmark
   public long RockAddChildIdBench(RockAddChildState rs) {
     long counter = 0;
