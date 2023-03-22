@@ -11,8 +11,10 @@
 
 package alluxio.master.metastore.rocks;
 
+import alluxio.master.file.contexts.CreateDirectoryContext;
 import alluxio.master.file.meta.InodeView;
-import alluxio.master.file.meta.MutableInodeFile;
+import alluxio.master.file.meta.MutableInode;
+import alluxio.master.file.meta.MutableInodeDirectory;
 import alluxio.master.metastore.ReadOption;
 import alluxio.resource.CloseableIterator;
 
@@ -55,6 +57,8 @@ public class RocksInodeStoreBench {
       }
       for (long i = 1; i <= mInodeCount; i++) {
         mRock.addChild(0, "test" + i, i);
+        mRock.writeInode(MutableInodeDirectory
+            .create(i, 0, "test" + i, CreateDirectoryContext.defaults()));
       }
     }
 
@@ -134,13 +138,10 @@ public class RocksInodeStoreBench {
   @Benchmark
   public long RockGetMutableBench(RockState rs) {
     long counter = 0;
-    MutableInodeFile file = null;
+    MutableInode file = null;
     for (long i = rs.mInodeCount; i > 0; i--) {
-      file = rs.mRock.getMutable(i).get().asFile();
+      rs.mRock.getMutable(i);
       counter += 1;
-    }
-    if (file != null) {
-      System.out.println(file.getBlockContainerId());
     }
     return counter;
   }
@@ -151,8 +152,11 @@ public class RocksInodeStoreBench {
   @Benchmark
   public long RockGetChildIdBench(RockState rs) {
     long counter = 0;
+    Long tmp = Long.valueOf(0);
+    Long p = Long.valueOf(0);
     for (long i = rs.mInodeCount; i > 0; i--) {
-      rs.mRock.getChildId(i, "test" + i, ReadOption.defaults());
+      // tmp = rs.mRock.getChildId(p, "test" + i, ReadOption.defaults()).get();
+      rs.mRock.getChildId(p, "test" + i, ReadOption.defaults());
       counter += 1;
     }
     return counter;
@@ -195,7 +199,7 @@ public class RocksInodeStoreBench {
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   @Benchmark
-  public long RockGetIteratorBench(RockAddChildState rs) {
+  public long RockGetIteratorBench(RockState rs) {
     long counter = 0;
     long limit = rs.mInodeCount;
     CloseableIterator<InodeView> it = rs.mRock.getCloseableIterator();
@@ -203,7 +207,6 @@ public class RocksInodeStoreBench {
     while (it.hasNext()) {
       inode = it.next();
     }
-    System.out.println(inode.getId());
     counter += 1;
     return counter;
   }
