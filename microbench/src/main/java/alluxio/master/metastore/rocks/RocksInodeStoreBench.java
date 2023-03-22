@@ -20,6 +20,7 @@ import org.junit.rules.TemporaryFolder;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.GroupThreads;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -129,6 +130,7 @@ public class RocksInodeStoreBench {
 
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @GroupThreads(10)
   @Benchmark
   public long RockGetMutableBench(RockState rs) {
     long counter = 0;
@@ -145,6 +147,7 @@ public class RocksInodeStoreBench {
 
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @GroupThreads(10)
   @Benchmark
   public long RockGetChildIdBench(RockState rs) {
     long counter = 0;
@@ -158,12 +161,15 @@ public class RocksInodeStoreBench {
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   @Measurement(iterations = 3)
+  @GroupThreads(10)
   @Benchmark
   public long RockGetChildIdsBench(RockGetChildIdsState rs) {
     long counter = 0;
     for (long i = rs.mTreeNumber; i > 0; i--) {
-      try {
-        rs.mRock.getChildIds(i, ReadOption.defaults());
+      try (CloseableIterator<Long> iter = rs.mRock.getChildIds(i, ReadOption.defaults())) {
+        while (iter.hasNext()) {
+          iter.next();
+        }
         counter += 1;
       } catch (Exception e) {
         System.out.println("when testing: " + e);
@@ -174,6 +180,7 @@ public class RocksInodeStoreBench {
 
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @GroupThreads(10)
   @Benchmark
   public long RockAddChildIdBench(RockAddChildState rs) {
     long counter = 0;
@@ -187,6 +194,7 @@ public class RocksInodeStoreBench {
 
   @BenchmarkMode(Mode.AverageTime)
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @GroupThreads(10)
   @Benchmark
   public long RockGetIteratorBench(RockAddChildState rs) {
     long counter = 0;
