@@ -188,6 +188,23 @@ public class WorkerLocationPolicy {
       }
     }
 
+    // Lazy initialization of the hash provider:
+    // When the active nodes map does not exist, the hash provider is not initialized yet.
+    // let one caller initialize the map while blocking all others.
+    private void maybeInitialize(List<BlockWorkerInfo> workerInfos, int numVirtualNodes) {
+      if (mActiveNodesByConsistentHashing == null) {
+        synchronized (mActiveNodesByConsistentHashing) {
+          // only one thread should reach here
+          // test again to skip re-initialization
+          if (mActiveNodesByConsistentHashing == null) {
+            mActiveNodesByConsistentHashing = build(workerInfos, numVirtualNodes);
+            mLastWorkerInfos = workerInfos;
+            mLastUpdatedTimestamp.set(System.nanoTime());
+          }
+        }
+      }
+    }
+
     private boolean hasWorkerListChanged(List<BlockWorkerInfo> workerInfoList,
                                          List<BlockWorkerInfo> anotherWorkerInfoList) {
       if (workerInfoList == anotherWorkerInfoList) {
