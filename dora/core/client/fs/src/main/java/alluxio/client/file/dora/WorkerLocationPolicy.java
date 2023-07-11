@@ -34,7 +34,6 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -182,23 +181,6 @@ public class WorkerLocationPolicy {
           if (mActiveNodesByConsistentHashing == null) {
             mActiveNodesByConsistentHashing = build(workerInfos, numVirtualNodes);
             mLastWorkerInfos.set(workerInfos);
-            mLastUpdatedTimestamp.set(System.nanoTime());
-          }
-        }
-      }
-    }
-
-    // Lazy initialization of the hash provider:
-    // When the active nodes map does not exist, the hash provider is not initialized yet.
-    // let one caller initialize the map while blocking all others.
-    private void maybeInitialize(List<BlockWorkerInfo> workerInfos, int numVirtualNodes) {
-      if (mActiveNodesByConsistentHashing == null) {
-        synchronized (ConsistentHashProvider.class) {
-          // only one thread should reach here
-          // test again to skip re-initialization
-          if (mActiveNodesByConsistentHashing == null) {
-            mActiveNodesByConsistentHashing = build(workerInfos, numVirtualNodes);
-            mLastWorkerInfos = workerInfos;
             mLastUpdatedTimestamp.set(System.nanoTime());
           }
         }
