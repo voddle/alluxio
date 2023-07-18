@@ -415,7 +415,7 @@ public class DoraCacheFileSystem extends DelegatingFileSystem {
    * @param alluxioPath Alluxio based path
    * @return UfsBaseFileSystem based full path
    */
-  private AlluxioURI convertAlluxioPathToUFSPath(AlluxioURI alluxioPath) {
+  public AlluxioURI convertAlluxioPathToUFSPath(AlluxioURI alluxioPath) {
     if (mDelegatedFileSystem instanceof UfsBaseFileSystem) {
       UfsBaseFileSystem under = (UfsBaseFileSystem) mDelegatedFileSystem;
       AlluxioURI rootUFS = under.getRootUFS();
@@ -481,5 +481,9 @@ public class DoraCacheFileSystem extends DelegatingFileSystem {
       listBuilder.add(blockLocationInfo);
     }
     return listBuilder.build();
+  }
+
+  public DoraCacheClient getClient() {
+    return mDoraClient;
   }
 }
