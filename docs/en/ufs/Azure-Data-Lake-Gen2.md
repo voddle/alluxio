@@ -1,18 +1,14 @@
 ---
 layout: global
 title: Azure Storage Gen2
-nickname: Azure Data Lake Storage Gen2 
-group: Storage Integrations
-priority: 2
 ---
 
 
 This guide describes how to configure Alluxio with [Azure Data Lake Storage Gen2](https://docs.microsoft.com/en-in/azure/storage/blobs/data-lake-storage-introduction) as the under storage system.
 
-## Prerequisites
+Azure Data Lake Storage Gen2 is a set of capabilities dedicated to big data analytics, built on Azure Blob Storage. It converges the capabilities of Azure Data Lake Storage Gen1 with Azure Blob Storage.
 
-The Alluxio binaries must be on your machine.
-You can [download the precompiled binaries directly]({{ '/en/Get-Started.html' | relativize_url }}).
+## Prerequisites
 
 In preparation for using Azure Data Lake storage with Alluxio, [create a new Data Lake storage in your Azure
 account](https://docs.microsoft.com/en-in/azure/storage/blobs/create-data-lake-storage-account) or use an existing Data Lake storage. 
@@ -31,7 +27,7 @@ you need to configure Alluxio to use under storage systems by modifying
 `conf/alluxio-site.properties`. If it does not exist, create the configuration file from the
 template.
 
-```console
+```shell
 $ cp conf/alluxio-site.properties.template conf/alluxio-site.properties
 ```
 
@@ -56,7 +52,7 @@ you need to configure Alluxio to use under storage systems by modifying
 `conf/alluxio-site.properties`. If it does not exist, create the configuration file from the
 template.
 
-```console
+```shell
 $ cp conf/alluxio-site.properties.template conf/alluxio-site.properties
 ```
 
@@ -84,7 +80,7 @@ you need to configure Alluxio to use under storage systems by modifying
 `conf/alluxio-site.properties`. If it does not exist, create the configuration file from the
 template.
 
-```console
+```shell
 $ cp conf/alluxio-site.properties.template conf/alluxio-site.properties
 ```
 
@@ -106,9 +102,9 @@ fs.azure.account.oauth2.msi.tenant=<TENANT>
 
 Start up Alluxio locally to see that everything works.
 
-```console
-./bin/alluxio format
-./bin/alluxio-start.sh local
+```shell
+$ ./bin/alluxio format
+$ ./bin/alluxio-start.sh local
 ```
 
 This should start an Alluxio master and an Alluxio worker. You can see the master UI at
@@ -116,8 +112,8 @@ This should start an Alluxio master and an Alluxio worker. You can see the maste
 
 Run a simple example program:
 
-```console
-./bin/alluxio runTests
+```shell
+$ ./bin/alluxio runTests
 ```
 
 Visit your directory `<AZURE_DIRECTORY>` to verify the files and directories created by Alluxio exist. For this test, you should see files named like:
@@ -128,6 +124,6 @@ Visit your directory `<AZURE_DIRECTORY>` to verify the files and directories cre
 
 To stop Alluxio, you can run:
 
-```console
-./bin/alluxio-stop.sh local
+```shell
+$ ./bin/alluxio-stop.sh local
 ```
